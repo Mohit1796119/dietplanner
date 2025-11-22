@@ -139,3 +139,62 @@ body {
     background: #e7fbee;
     color: #2F8F46;
 }
+/* ========== MOBILE VIEW (max-width: 600px) ========== */
+@media (max-width: 600px) {
+
+    body {
+        padding: 0;
+        margin: 0;
+    }
+    .main-bg {
+    position: fixed;
+    inset: 0;
+    background: url("/static/images/Gemini_Generated_Image_lguo5ilguo5ilguo.png") center/cover;
+    filter: blur(10px) brightness(0.6);
+    z-index: -1;
+    }
+
+    .container {
+        width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+        border-radius: 0;
+        margin: 0;
+    }
+
+    .logo {
+        font-size: 24px;
+        text-align: center;
+    }
+
+    h2 {
+        font-size: 18px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .field {
+        width: 100%;
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .field input,
+    .field select {
+        width: 100%;
+        padding: 9px;
+        font-size: 14px;
+    }
+
+    .options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+}
