@@ -8,7 +8,9 @@ body {
 .main-bg {
     position: fixed;
     inset: 0;
-    background: url("/static/images/Gemini_Generated_Image_lguo5ilguo5ilguo.png") center/cover;
+    background-image: url("/static/images/Gemini_Generated_Image_lguo5ilguo5ilguo.png");
+    background-size: cover;
+    background-position: center;
     filter: blur(8px) brightness(0.6);
     z-index: -1;
 }
