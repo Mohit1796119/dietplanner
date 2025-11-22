@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nutrition Dashboard</title>
+    <link rel="stylesheet" href="static/result.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="main-bg"></div>
+
+<div class="container">
+
+    <div class="logo">NutriLog</div>
+    <h2 class="title">Your Nutrition Dashboard</h2>
+
+    <div class="info-box" id="userInfo">Loading...</div>
+
+    <h3 class="section-title" id="planTitle">Meal Plan</h3>
+
+    <div class="table-wrapper">
+        <table class="meal-table" id="weekTable">
+            <tr>
+                <th>Day</th>
+                <th>Breakfast</th>
+                <th>Lunch</th>
+                <th>Dinner</th>
+                <th>Snacks</th>
+                <th>Total Calories</th>
+            </tr>
+        </table>
+    </div>
+
+    <div class="summary-line">Total Calories (All Days): <span id="weekTotalCal">0</span></div>
+
+    <h3 class="section-title">Today's Meals</h3>
+
+    <div class="table-wrapper">
+        <table class="meal-table" id="mealTable">
+            <tr>
+                <th>Meal</th>
+                <th>Food</th>
+                <th>Calories</th>
+                <th>Protein</th>
+                <th>Fat</th>
+                <th>Carbs</th>
+            </tr>
+        </table>
+    </div>
+
+    <h3 class="section-title">Your Total Macros Today</h3>
+
+    <table class="macro-table">
+        <tr>
+            <th>Total Calories</th>
+            <th>Total Protein</th>
+            <th>Total Fat</th>
+            <th>Total Carbs</th>
+        </tr>
+        <tr>
+            <td id="totalCal">0</td>
+            <td id="totalProtein">0</td>
+            <td id="totalFat">0</td>
+            <td id="totalCarbs">0</td>
+        </tr>
+    </table>
+
+    <h3 class="section-title">Visual Overview</h3>
+
+    <div class="chart-container">
+        <div class="chart-card">
+            <h4>Calories Per Meal</h4>
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h4>Macros Breakdown</h4>
+            <canvas id="macroChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h4>Target vs Intake</h4>
+            <canvas id="macroCompareChart"></canvas>
+        </div>
+    </div>
+
+    <div class="summary-box">
+        <div class="highlight">🔥 Final Calories: <span id="totalCal2"></span></div>
+        <div class="highlight green">⚖ Goal Calories: <span id="goalCalorieDisplay"></span></div>
+    </div>
+
+</div>
+
+<!-- ======================= -->
+<!--  JAVASCRIPT -->
+<!-- ======================= -->
+<script>
+console.log("Loading user data...");
+
+const user = JSON.parse(localStorage.getItem("userData") || "{}");
+
+if (!user || !user.age || !user.weight) {
+    document.getElementById("userInfo").innerHTML =
+        "<b style='color:red'>No user data found. Please go back and fill the form.</b>";
+    throw new Error("Missing user data");
+}
+
+// Show user info
+document.getElementById("userInfo").innerHTML =
+    `${user.diet.toUpperCase()} | Age: ${user.age} | Weight: ${user.weight}kg | Height: ${user.height}cm |
+     Goal Weight: ${user.goal_weight}kg | Pace: ${user.goal_pace}kg/week | Activity: ${user.activity} |
+     Days: ${user.days} | Budget: ₹${user.budget}`;
+
+document.getElementById("planTitle").textContent = `${user.days}-Day Meal Plan`;
+
+
+// -----------------------------
+// FOOD DATABASE
+// -----------------------------
+const foodDB = {
+   veg: {
+    Breakfast: [
+        // NORTH INDIA
+        {name:"Aloo Paratha + Curd", cal:410, protein:10, fat:12, carbs:65},
+        {name:"Methi Paratha", cal:350, protein:9, fat:11, carbs:55},
+        {name:"Besan Chilla", cal:290, protein:13, fat:8, carbs:35},
+        {name:"Paneer Paratha", cal:420, protein:18, fat:15, carbs:52},
+        {name:"Dalia Upma", cal:310, protein:10, fat:5, carbs:56},
+
+        // SOUTH INDIA
+        {name:"Idli Sambhar", cal:320, protein:9, fat:4, carbs:55},
+        {name:"Masala Dosa", cal:420, protein:10, fat:12, carbs:70},
+        {name:"Upma", cal:300, protein:7, fat:5, carbs:52},
+        {name:"Uttapam", cal:360, protein:8, fat:6, carbs:62},
+        {name:"Pongal", cal:370, protein:9, fat:8, carbs:62},
+
+        // WEST INDIA
+        {name:"Poha", cal:280, protein:6, fat:4, carbs:50},
+        {name:"Thepla + Curd", cal:330, protein:8, fat:10, carbs:48},
+        {name:"Sabudana Khichdi", cal:420, protein:5, fat:14, carbs:68},
+        {name:"Handvo", cal:360, protein:12, fat:12, carbs:46},
+        {name:"Khakhra + Tea", cal:260, protein:5, fat:6, carbs:45},
+
+        // EAST INDIA
+        {name:"Chire Dudh Puli", cal:300, protein:8, fat:7, carbs:50},
+        {name:"Rava Ladoo + Milk", cal:350, protein:9, fat:10, carbs:58},
+        {name:"Sattu Drink + Roti", cal:380, protein:16, fat:5, carbs:61},
+        {name:"Chakuli Pitha", cal:330, protein:8, fat:10, carbs:52},
+        {name:"Sabji + Luchi (Light)", cal:390, protein:7, fat:12, carbs:63},
+
+        // PAN-INDIA HEALTHY
+        {name:"Oats + Milk", cal:340, protein:14, fat:6, carbs:60},
+        {name:"Banana Smoothie", cal:350, protein:12, fat:6, carbs:66},
+        {name:"Sprouts Bowl", cal:250, protein:15, fat:3, carbs:40},
+        {name:"Moong Chilla + Green Chutney", cal:310, protein:14, fat:6, carbs:48},
+        {name:"Multigrain Toast + Peanut Butter", cal:360, protein:10, fat:12, carbs:48}
+    ],
+
+    Lunch: [
+        // NORTH INDIA
+        {name:"Rajma Chawal", cal:620, protein:20, fat:10, carbs:95},
+        {name:"Chole + Rice", cal:580, protein:18, fat:8, carbs:92},
+        {name:"Dal Makhani + Roti", cal:550, protein:22, fat:15, carbs:70},
+        {name:"Aloo Gobhi + Roti", cal:480, protein:10, fat:8, carbs:75},
+        {name:"Paneer Butter Masala + Naan", cal:780, protein:26, fat:32, carbs:88},
+
+        // SOUTH INDIA
+        {name:"Curd Rice", cal:430, protein:10, fat:8, carbs:72},
+        {name:"Lemon Rice", cal:450, protein:8, fat:10, carbs:75},
+        {name:"Vegetable Sambar + Rice", cal:520, protein:14, fat:6, carbs:88},
+        {name:"Avial + Rice", cal:500, protein:9, fat:14, carbs:75},
+        {name:"Veg Chettinad + Parotta", cal:670, protein:16, fat:20, carbs:96},
+
+        // WEST INDIA
+        {name:"Veg Khichdi", cal:480, protein:15, fat:8, carbs:72},
+        {name:"Pav Bhaji (Low Butter)", cal:520, protein:12, fat:14, carbs:78},
+        {name:"Veg Pulao + Raita", cal:540, protein:12, fat:10, carbs:80},
+        {name:"Gujarati Kadhi + Rice", cal:500, protein:11, fat:9, carbs:78},
+        {name:"Undhiyu + Puri", cal:720, protein:18, fat:28, carbs:95},
+
+        // EAST INDIA
+        {name:"Chorchori + Rice", cal:480, protein:10, fat:6, carbs:78},
+        {name:"Veg Thukpa", cal:410, protein:12, fat:4, carbs:65},
+        {name:"Dalma + Rice", cal:520, protein:16, fat:8, carbs:80},
+        {name:"Ghugni + Paratha", cal:590, protein:22, fat:12, carbs:85},
+        {name:"Aloo Posto + Rice", cal:560, protein:8, fat:16, carbs:88},
+
+        // PAN-INDIA HEALTHY OPTIONS
+        {name:"Tofu Stir Fry + Rice", cal:540, protein:22, fat:14, carbs:78},
+        {name:"Veg Biryani (Low Oil)", cal:610, protein:18, fat:12, carbs:96},
+        {name:"Soybean Curry + Rice", cal:600, protein:30, fat:10, carbs:85},
+        {name:"Paneer Bhurji + Roti", cal:620, protein:26, fat:20, carbs:70},
+        {name:"Chana Dal + Roti", cal:480, protein:18, fat:6, carbs:72}
+    ],
+
+    Dinner: [
+        // NORTH INDIA
+        {name:"Palak Paneer", cal:530, protein:22, fat:18, carbs:60},
+        {name:"Baingan Bharta + Roti", cal:440, protein:9, fat:7, carbs:68},
+        {name:"Kadhi Pakora + Rice", cal:580, protein:14, fat:20, carbs:75},
+        {name:"Dal Tadka + Jeera Rice", cal:520, protein:18, fat:9, carbs:78},
+        {name:"Paneer Tikka Masala", cal:660, protein:24, fat:24, carbs:80},
+
+        // SOUTH INDIA
+        {name:"Rasam + Rice", cal:420, protein:10, fat:6, carbs:70},
+        {name:"Vegetable Kurma + Appam", cal:590, protein:12, fat:16, carbs:85},
+        {name:"Veg Stew + Idiyappam", cal:560, protein:11, fat:14, carbs:90},
+        {name:"Tomato Rice", cal:500, protein:9, fat:8, carbs:82},
+        {name:"Mushroom Pepper Fry", cal:430, protein:15, fat:12, carbs:55},
+
+        // WEST INDIA
+        {name:"Pav Bhaji Dinner (Low Oil)", cal:550, protein:15, fat:14, carbs:86},
+        {name:"Dal Dhokli", cal:480, protein:18, fat:9, carbs:75},
+        {name:"Veg Handi + Chapati", cal:560, protein:14, fat:12, carbs:82},
+        {name:"Masala Khichdi", cal:520, protein:16, fat:9, carbs:78},
+        {name:"Methi Thepla + Sabji", cal:490, protein:10, fat:10, carbs:72},
+
+        // EAST INDIA
+        {name:"Mushroom Curry + Rice", cal:580, protein:14, fat:14, carbs:88},
+        {name:"Mixed Veg Jhol", cal:430, protein:9, fat:6, carbs:74},
+        {name:"Vegetable Stew", cal:410, protein:10, fat:8, carbs:60},
+        {name:"Paneer Kalia", cal:600, protein:20, fat:16, carbs:83},
+        {name:"Aloo Dum + Luchi", cal:720, protein:10, fat:26, carbs:105},
+
+        // PAN-INDIA LIGHT DINNER
+        {name:"Vegetable Soup + Paneer Grill", cal:390, protein:20, fat:8, carbs:45},
+        {name:"Millet Khichdi", cal:480, protein:14, fat:9, carbs:72},
+        {name:"Vegetable Fried Rice", cal:550, protein:12, fat:14, carbs:85},
+        {name:"Tofu Curry + Roti", cal:530, protein:22, fat:12, carbs:68},
+        {name:"Sprout Bowl Dinner", cal:350, protein:22, fat:4, carbs:48}
+    ],
+
+    Snacks: [
+        {name:"Greek Yogurt", cal:120, protein:10, fat:3, carbs:10},
+        {name:"Peanuts", cal:200, protein:8, fat:16, carbs:10},
+        {name:"Protein Bar", cal:220, protein:15, fat:6, carbs:25},
+        {name:"Mixed Nuts", cal:250, protein:8, fat:20, carbs:8},
+        {name:"Sprout Bowl", cal:180, protein:12, fat:4, carbs:25},
+        {name:"Paneer Tikka", cal:300, protein:20, fat:18, carbs:10},
+        {name:"Fruit Salad", cal:150, protein:3, fat:1, carbs:35},
+        {name:"Popcorn", cal:110, protein:3, fat:2, carbs:22},
+        {name:"Chia Pudding", cal:210, protein:8, fat:9, carbs:28},
+        {name:"Protein Smoothie", cal:320, protein:25, fat:4, carbs:40},
+        {name:"Khakhra", cal:150, protein:4, fat:5, carbs:24},
+        {name:"Masala Corn", cal:200, protein:6, fat:4, carbs:34}
+    ]
+},
+    nonveg: {
+    Breakfast: [
+    // NORTH INDIA
+    {name:"Egg Bhurji + Toast", cal:390, protein:24, fat:18, carbs:28},
+    {name:"Boiled Eggs (4)", cal:320, protein:24, fat:22, carbs:2},
+    {name:"Chicken Sandwich", cal:380, protein:28, fat:12, carbs:30},
+    {name:"Omelette with Veggies", cal:350, protein:22, fat:18, carbs:8},
+    {name:"Egg Paratha", cal:420, protein:20, fat:18, carbs:45},
+
+    // SOUTH INDIA
+    {name:"Chicken Dosa", cal:450, protein:30, fat:14, carbs:60},
+    {name:"Egg Appam", cal:340, protein:16, fat:10, carbs:45},
+    {name:"Chicken Upma", cal:430, protein:26, fat:10, carbs:60},
+    {name:"Egg Idli", cal:360, protein:18, fat:8, carbs:55},
+    {name:"Prawn Uttapam", cal:420, protein:30, fat:8, carbs:55},
+
+    // WEST INDIA
+    {name:"Egg Kanda Poha", cal:380, protein:15, fat:10, carbs:58},
+    {name:"Goan Fish Cutlet Sandwich", cal:420, protein:22, fat:12, carbs:55},
+    {name:"Chicken Thepla Roll", cal:450, protein:28, fat:14, carbs:50},
+
+    // EAST INDIA
+    {name:"Egg Panta Bhaat (Light)", cal:290, protein:14, fat:6, carbs:42},
+    {name:"Fish Pitha", cal:340, protein:20, fat:10, carbs:40}
+    ],
+
+    Lunch: [
+    // NORTH INDIA
+    {name:"Butter Chicken + Rice", cal:780, protein:42, fat:32, carbs:82},
+    {name:"Chicken Curry + Roti", cal:640, protein:38, fat:16, carbs:70},
+    {name:"Egg Curry + Rice", cal:620, protein:28, fat:15, carbs:75},
+    {name:"Chicken Keema + Roti", cal:610, protein:35, fat:16, carbs:68},
+    {name:"Tandoori Chicken + Salad", cal:580, protein:45, fat:15, carbs:20},
+
+    // SOUTH INDIA
+    {name:"Andhra Chicken Curry + Rice", cal:760, protein:42, fat:28, carbs:90},
+    {name:"Kerala Fish Curry + Rice", cal:700, protein:40, fat:20, carbs:75},
+    {name:"Chicken Chettinad + Parotta", cal:820, protein:46, fat:32, carbs:95},
+    {name:"Prawn Curry + Rice", cal:710, protein:44, fat:20, carbs:82},
+    {name:"Egg Roast + Appam", cal:600, protein:26, fat:14, carbs:78},
+
+    // WEST INDIA
+    {name:"Goan Fish Thali", cal:740, protein:45, fat:24, carbs:92},
+    {name:"Mutton Sukka + Rice", cal:860, protein:48, fat:38, carbs:70},
+    {name:"Bombay Egg Rice", cal:590, protein:20, fat:14, carbs:88},
+    {name:"Chicken Pulao", cal:680, protein:32, fat:14, carbs:96},
+    {name:"Fish Fry + Roti", cal:640, protein:38, fat:18, carbs:65},
+
+    // EAST INDIA
+    {name:"Bengali Fish Curry (Rohu) + Rice", cal:690, protein:40, fat:18, carbs:78},
+    {name:"Assam Fish Tenga + Rice", cal:620, protein:36, fat:12, carbs:80},
+    {name:"Mutton Curry + Rice", cal:880, protein:50, fat:38, carbs:78},
+    {name:"Egg Masala + Rice", cal:630, protein:26, fat:16, carbs:82},
+    {name:"Chicken Thukpa", cal:540, protein:28, fat:10, carbs:70}
+],
+
+
+    Dinner: [
+    // NORTH INDIA
+    {name:"Grilled Chicken + Veggies", cal:520, protein:45, fat:10, carbs:25},
+    {name:"Chicken Soup Bowl", cal:300, protein:25, fat:7, carbs:20},
+    {name:"Egg Fried Rice", cal:640, protein:22, fat:16, carbs:90},
+    {name:"Chicken Meatballs + Gravy", cal:680, protein:40, fat:20, carbs:75},
+    {name:"Fish Tikka + Salad", cal:480, protein:40, fat:10, carbs:18},
+
+    // SOUTH INDIA
+    {name:"Kerala Grilled Fish", cal:530, protein:38, fat:14, carbs:25},
+    {name:"Chicken Pepper Fry", cal:550, protein:42, fat:18, carbs:20},
+    {name:"Egg Curry + Idiyappam", cal:620, protein:28, fat:12, carbs:78},
+    {name:"Prawn Roast + Rice", cal:700, protein:40, fat:18, carbs:85},
+    {name:"Fish Moilee + Appam", cal:660, protein:32, fat:22, carbs:75},
+
+    // WEST INDIA
+    {name:"Goan Prawn Balchao + Rice", cal:690, protein:38, fat:18, carbs:82},
+    {name:"Malvani Chicken Curry", cal:720, protein:42, fat:26, carbs:68},
+    {name:"Egg Sukka + Chapati", cal:590, protein:26, fat:15, carbs:78},
+    {name:"Bombay Fish Fry Dinner", cal:640, protein:38, fat:14, carbs:70},
+    {name:"Chicken Stew + Pav", cal:610, protein:34, fat:16, carbs:80},
+
+    // EAST INDIA
+    {name:"Macher Jhol + Rice", cal:630, protein:36, fat:12, carbs:85},
+    {name:"Chicken Stew (Bengali)", cal:560, protein:30, fat:14, carbs:70},
+    {name:"Fish Cutlet Dinner", cal:590, protein:32, fat:16, carbs:65},
+    {name:"Assam Prawn Curry", cal:660, protein:40, fat:20, carbs:70},
+    {name:"Egg Dalma", cal:510, protein:22, fat:10, carbs:68}
+],
+
+
+    Snacks: [
+    {name:"Protein Shake", cal:250, protein:30, fat:5, carbs:12},
+    {name:"Egg Salad Bowl", cal:220, protein:16, fat:10, carbs:15},
+    {name:"Tuna Sandwich", cal:320, protein:25, fat:8, carbs:35},
+    {name:"Chicken Tikka", cal:300, protein:28, fat:12, carbs:8},
+    {name:"Fish Cutlets", cal:260, protein:22, fat:10, carbs:18},
+    {name:"Chicken Momos", cal:350, protein:18, fat:14, carbs:40},
+    {name:"Boiled Chicken Cubes", cal:280, protein:45, fat:5, carbs:2},
+    {name:"Turkey Jerky", cal:180, protein:25, fat:2, carbs:6},
+    {name:"Roasted Chickpeas Mix", cal:200, protein:12, fat:6, carbs:30},
+    {name:"Prawn Skewers", cal:200, protein:26, fat:6, carbs:5},
+    {name:"Egg Wrap", cal:280, protein:20, fat:10, carbs:22},
+    {name:"Chicken Kebab Rolls", cal:340, protein:28, fat:12, carbs:30},
+    {name:"Smoked Fish Bites", cal:230, protein:30, fat:8, carbs:5},
+    {name:"Chicken Soup Cup", cal:180, protein:22, fat:5, carbs:10},
+    {name:"Egg Protein Smoothie", cal:300, protein:26, fat:8, carbs:24}
+]
+}
+
+}
+
+// Pick random food
+function pick(meal) {
+    const list = foodDB[user.diet][meal];
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+
+// -----------------------------
+// GENERATE FULL MEAL PLAN
+// -----------------------------
+let weekTotal = 0;
+
+for (let d = 1; d <= user.days; d++) {
+    const B = pick("Breakfast");
+    const L = pick("Lunch");
+    const D = pick("Dinner");
+    const S = pick("Snacks");
+
+    const dayTotal = B.cal + L.cal + D.cal + S.cal;
+    weekTotal += dayTotal;
+
+    document.getElementById("weekTable").innerHTML += `
+        <tr>
+            <td>Day ${d}</td>
+            <td>${B.name}</td>
+            <td>${L.name}</td>
+            <td>${D.name}</td>
+            <td>${S.name}</td>
+            <td>${dayTotal}</td>
+        </tr>`;
+}
+
+document.getElementById("weekTotalCal").textContent = weekTotal;
+
+
+// -----------------------------
+// TODAY'S MEALS
+// -----------------------------
+let today = {
+    Breakfast: pick("Breakfast"),
+    Lunch: pick("Lunch"),
+    Dinner: pick("Dinner"),
+    Snacks: pick("Snacks")
+};
+
+let tc = 0, tp = 0, tf = 0, tcarb = 0;
+
+for (const [meal, food] of Object.entries(today)) {
+    tc += food.cal;
+    tp += food.protein;
+    tf += food.fat;
+    tcarb += food.carbs;
+
+    document.getElementById("mealTable").innerHTML += `
+    <tr>
+        <td>${meal}</td>
+        <td>${food.name}</td>
+        <td>${food.cal}</td>
+        <td>${food.protein}</td>
+        <td>${food.fat}</td>
+        <td>${food.carbs}</td>
+    </tr>`;
+}
+
+document.getElementById("totalCal").textContent = tc;
+document.getElementById("totalProtein").textContent = tp;
+document.getElementById("totalFat").textContent = tf;
+document.getElementById("totalCarbs").textContent = tcarb;
+document.getElementById("totalCal2").textContent = tc;
+
+
+// -----------------------------
+// GOAL CALCULATION
+// -----------------------------
+let BMR =
+    user.gender === "male"
+        ? 10 * user.weight + 6.25 * user.height - 5 * user.age + 5
+        : 10 * user.weight + 6.25 * user.height - 5 * user.age - 161;
+
+let TDEE = Math.round(BMR * (user.activity === "low" ? 1.2 : user.activity === "medium" ? 1.55 : 1.75));
+
+let goalCalories = TDEE;
+if (user.goalType === "fatloss") goalCalories -= 500;
+if (user.goalType === "bulk") goalCalories += 400;
+
+document.getElementById("goalCalorieDisplay").textContent = goalCalories;
+
+
+// -----------------------------
+// CHARTS
+// -----------------------------
+new Chart(document.getElementById("pieChart"), {
+    type: "pie",
+    data: {
+        labels: ["Breakfast", "Lunch", "Dinner", "Snacks"],
+        datasets: [{
+            data: [
+                today.Breakfast.cal,
+                today.Lunch.cal,
+                today.Dinner.cal,
+                today.Snacks.cal
+            ],
+            backgroundColor: ["#34d399", "#60a5fa", "#fbbf24", "#fb7185"]
+        }]
+    }
+});
+
+new Chart(document.getElementById("macroChart"), {
+    type: "bar",
+    data: {
+        labels: ["Protein", "Fat", "Carbs"],
+        datasets: [{
+            label: "Grams",
+            data: [tp, tf, tcarb],
+            backgroundColor: ["#22c55e", "#f87171", "#facc15"]
+        }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+});
+
+new Chart(document.getElementById("macroCompareChart"), {
+    type: "bar",
+    data: {
+        labels: ["Protein", "Fat", "Carbs"],
+        datasets: [
+            {
+                label: "Your Intake",
+                data: [tp, tf, tcarb],
+                backgroundColor: "#fb923c"
+            },
+            {
+                label: "Target",
+                data: [80, 60, 220], 
+                backgroundColor: "#22c55e"
+            }
+        ]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+});
+</script>
+
+</body>
+</html>

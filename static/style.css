@@ -1,0 +1,83 @@
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    background: #f0f0f0;
+}
+
+/* Background vegetables blur style */
+.main-bg {
+    position: fixed;
+    inset: 0;
+    background: url("/static/images/Gemini_Generated_Image_lguo5ilguo5ilguo.png") center/cover;
+    filter: blur(8px) brightness(0.6);
+    z-index: -1;
+}
+
+.container {
+    width: 380px;
+    margin: 40px auto;
+    padding: 32px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    text-align: center;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2F8F46;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #343434;
+}
+
+form {
+    text-align: left;
+}
+
+.field {
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #555;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+.options label {
+    margin-right: 15px;
+    font-size: 14px;
+}
+
+.btn {
+    width: 100%;
+    padding: 14px;
+    background: #2F8F46;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #27793b;
+}

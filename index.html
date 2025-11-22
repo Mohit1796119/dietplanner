@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Diet Planner</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+<div class="main-bg"></div>
+
+<div class="container">
+    <div class="logo">NutriLog</div>
+    <h2>Let’s Plan Your Diet!</h2>
+
+    <form id="dietForm">
+
+        <div class="field">
+            <label>Diet Type</label>
+            <div class="options">
+                <label><input type="radio" name="diet" value="veg" > Veg</label>
+                <label><input type="radio" name="diet" value="nonveg"> Non-Veg</label>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Age</label>
+            <input type="number" id="age">
+        </div>
+
+        <div class="field">
+            <label>Weight (kg)</label>
+            <input type="number" id="weight">
+        </div>
+
+        <div class="field">
+            <label>Height (cm)</label>
+            <input type="number" id="height">
+        </div>
+
+        <div class="field">
+            <label>Goal Weight (kg)</label>
+            <input type="number" id="goalWeight">
+        </div>
+
+        <div class="field">
+            <label>Goal Pace (kg/week)</label>
+            <input type="number" id="goalPace" value="0.5">
+        </div>
+
+        <div class="field">
+            <label>Activity Level</label>
+            <select id="activity">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>Goal Type</label>
+            <select id="goalType">
+                <option value="fatloss">Fat Loss</option>
+                <option value="bulk">Bulk</option>
+                <option value="maintain">Maintain</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>Days (7-30)</label>
+            <input type="number" id="days" min="7" max="30" value="7">
+        </div>
+
+        <div class="field">
+            <label>Budget (₹)</label>
+            <input type="number" id="budget">
+        </div>
+
+        <div class="field">
+            <label>Gender</label>
+            <select id="gender">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+        </div>
+
+        <button type="button" class="btn" onclick="saveData()">Generate Diet Plan</button>
+    </form>
+</div>
+
+<script>
+function saveData() {
+    const userData = {
+        diet: document.querySelector("input[name='diet']:checked").value,
+        age: document.getElementById("age").value,
+        weight: document.getElementById("weight").value,
+        height: document.getElementById("height").value,
+        goal_weight: document.getElementById("goalWeight") ? document.getElementById("goalWeight").value : "",
+        goal_pace: document.getElementById("goalPace").value,
+        activity: document.getElementById("activity").value,
+        goalType: document.getElementById("goalType").value,
+        days: document.getElementById("days").value,
+        budget: document.getElementById("budget").value,
+        gender: document.getElementById("gender").value
+    };
+
+    localStorage.setItem("userData", JSON.stringify(userData));
+    window.location.href = "result.html";
+}
+</script>
+
+
+</body>
+</html>
